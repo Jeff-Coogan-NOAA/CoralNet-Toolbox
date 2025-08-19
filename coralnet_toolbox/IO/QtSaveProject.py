@@ -98,7 +98,7 @@ class SaveProject(QDialog):
             project_data = {
                 'image_paths': self.get_images(),
                 'labels': self.get_labels(),
-                'annotations': self.get_annotations(),
+                'annotations': self.get_annotations_with_semantic_data(),
                 'workareas': self.get_workareas()
             }
 
@@ -233,6 +233,85 @@ class SaveProject(QDialog):
             progress_bar.close()
 
         return export_annotations
+
+    def get_annotations_with_semantic_data(self):
+        """Get the annotations to export with semantic segmentation data."""
+        # Get regular annotations first
+        export_annotations = self.get_annotations()
+        
+        # Get semantic segmentation data from main window (persistent data)
+        semantic_data = {}
+        
+        # First, ensure we have the latest data from the semantic segmentation window if it's open
+        if (hasattr(self.main_window, 'semantic_segmentation_window') and 
+            self.main_window.semantic_segmentation_window is not None):
+            print("DEBUG: Gathering latest semantic segmentation data from open window...")
+            try:
+                # Get the latest data from the open window
+                latest_data = self.main_window.semantic_segmentation_window.get_semantic_segmentation_data()
+                # Update the main window's persistent data
+                self.main_window.semantic_segmentation_data.update(latest_data)
+                print(f"DEBUG: Updated main window persistent data with latest from window")
+            except Exception as e:
+                print(f"DEBUG: Error updating semantic data from window: {e}")
+        
+        if hasattr(self.main_window, 'semantic_segmentation_data'):
+            # Use persistent data from main window
+            semantic_data = self.main_window.semantic_segmentation_data.copy()
+            print(f"Retrieved persistent semantic segmentation data: {len(semantic_data.get('annotation_order', {}))} annotation orders, {len(semantic_data.get('mask_paths', {}))} mask paths")
+            
+            # Debug: Print actual mask paths
+            mask_paths = semantic_data.get('mask_paths', {})
+            if mask_paths:
+                print("DEBUG: Found mask paths in persistent data:")
+                for image_path, mask_path in mask_paths.items():
+                    print(f"  '{image_path}' -> '{mask_path}'")
+            else:
+                print("DEBUG: No mask paths found in persistent data")
+                
+        elif (hasattr(self.main_window, 'semantic_segmentation_window') and 
+              self.main_window.semantic_segmentation_window is not None):
+            # Fallback: get data from open window
+            semantic_window = self.main_window.semantic_segmentation_window
+            semantic_data = semantic_window.get_semantic_segmentation_data()
+            print(f"Retrieved semantic segmentation data from open window: {len(semantic_data.get('annotation_order', {}))} annotation orders, {len(semantic_data.get('mask_paths', {}))} mask paths")
+            
+            # Debug: Print the actual keys
+            if 'annotation_order' in semantic_data:
+                print("Semantic annotation_order keys:")
+                for key in semantic_data['annotation_order'].keys():
+                    print(f"  '{key}'")
+        
+        # Create new structure with annotations plus semantic data for each image
+        enhanced_annotations = {}
+        
+        # Get all image paths from both annotations and semantic data
+        all_image_paths = set(export_annotations.keys())
+        if 'annotation_order' in semantic_data:
+            all_image_paths.update(semantic_data['annotation_order'].keys())
+        if 'mask_paths' in semantic_data:
+            all_image_paths.update(semantic_data['mask_paths'].keys())
+        
+        print("Export annotations keys:")
+        for key in list(export_annotations.keys())[:3]:  # Show first 3
+            print(f"  '{key}'")
+        
+        for image_path in all_image_paths:
+            annotation_order = semantic_data.get('annotation_order', {}).get(image_path, [])
+            mask_path = semantic_data.get('mask_paths', {}).get(image_path, "")
+            
+            # Debug: Show what we're getting for each path
+            if annotation_order or mask_path:
+                print(f"For path '{image_path}': order={annotation_order}, mask='{mask_path}'")
+            
+            enhanced_annotations[image_path] = {
+                'annotations': export_annotations.get(image_path, []),
+                'annotation_order': annotation_order,
+                'mask_path': mask_path
+            }
+        
+        print(f"Enhanced annotations structure created for {len(enhanced_annotations)} images")
+        return enhanced_annotations
 
     def get_workareas(self):
         """Get the work areas to export."""

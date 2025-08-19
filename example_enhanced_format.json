@@ -1,0 +1,129 @@
+{
+    "image_paths": [
+        "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.023600_7217.jpg",
+        "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.523586_7218.jpg",
+        "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051626.023600_7219.jpg"
+    ],
+    "labels": [
+        {
+            "id": "-1",
+            "short_label_code": "Review",
+            "long_label_code": "Review",
+            "color": [255, 255, 255, 255]
+        },
+        {
+            "id": "14861927-0acf-487c-8e1f-266f61072c4b",
+            "short_label_code": "a",
+            "long_label_code": "a",
+            "color": [214, 236, 194, 255]
+        },
+        {
+            "id": "c9074b79-d7cf-4b37-aaf1-ae40df616ae0",
+            "short_label_code": "b",
+            "long_label_code": "b",
+            "color": [50, 28, 179, 255]
+        },
+        {
+            "id": "8b6b9cdc-666e-4f1c-ad63-39114f2a6c1f",
+            "short_label_code": "c",
+            "long_label_code": "c",
+            "color": [42, 26, 202, 255]
+        }
+    ],
+    "annotations": {
+        "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.023600_7217.jpg": {
+            "annotations": [
+                {
+                    "type": "PolygonAnnotation",
+                    "id": "807ccd7c-8039-447c-94e0-9977fbbca150",
+                    "label_short_code": "c",
+                    "label_long_code": "c",
+                    "annotation_color": [42, 26, 202, 255],
+                    "image_path": "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.023600_7217.jpg",
+                    "label_id": "8b6b9cdc-666e-4f1c-ad63-39114f2a6c1f",
+                    "data": {},
+                    "machine_confidence": {},
+                    "verified": true,
+                    "area": 108947.99688167823,
+                    "perimeter": 1240.1281864109137,
+                    "points": [
+                        [3076.427012, 1706.295652],
+                        [3072.367633, 1706.295652],
+                        [3064.248875, 1702.236273]
+                    ]
+                },
+                {
+                    "type": "PolygonAnnotation",
+                    "id": "59c75f46-bf61-473c-8610-1a21ec951ad7",
+                    "label_short_code": "b",
+                    "label_long_code": "b",
+                    "annotation_color": [50, 28, 179, 255],
+                    "image_path": "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.023600_7217.jpg",
+                    "label_id": "c9074b79-d7cf-4b37-aaf1-ae40df616ae0",
+                    "data": {},
+                    "machine_confidence": {},
+                    "verified": true,
+                    "area": 108115.82987792627,
+                    "perimeter": 1291.495107209417,
+                    "points": [
+                        [1631.288011, 1953.917785],
+                        [1631.288011, 1949.858405],
+                        [1631.288011, 1945.799026]
+                    ]
+                },
+                {
+                    "type": "PolygonAnnotation",
+                    "id": "1352682b-b021-4017-9757-adf21c87ce16",
+                    "label_short_code": "a",
+                    "label_long_code": "a",
+                    "annotation_color": [214, 236, 194, 255],
+                    "image_path": "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.023600_7217.jpg",
+                    "label_id": "14861927-0acf-487c-8e1f-266f61072c4b",
+                    "data": {},
+                    "machine_confidence": {},
+                    "verified": true,
+                    "area": 2642839.6333261887,
+                    "perimeter": 6096.869322567768,
+                    "points": [
+                        [1200.993814, 1450.554762],
+                        [1200.993814, 1446.495382],
+                        [1200.993814, 1442.436003]
+                    ]
+                }
+            ],
+            "annotation_order": ["b", "a", "c"],
+            "mask_path": "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Masks\/ESC_stills_processed_2024-03-15T051625.023600_7217_mask.png"
+        },
+        "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.523586_7218.jpg": {
+            "annotations": [
+                {
+                    "type": "PolygonAnnotation",
+                    "id": "c521480d-47bb-40c7-8219-de4cd5d7175e",
+                    "label_short_code": "c",
+                    "label_long_code": "c",
+                    "annotation_color": [42, 26, 202, 255],
+                    "image_path": "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051625.523586_7218.jpg",
+                    "label_id": "8b6b9cdc-666e-4f1c-ad63-39114f2a6c1f",
+                    "data": {},
+                    "machine_confidence": {},
+                    "verified": true,
+                    "area": 138172.72257493483,
+                    "perimeter": 1442.060003306359,
+                    "points": [
+                        [1891.088281, 1133.923183],
+                        [1891.088281, 1125.804424],
+                        [1891.088281, 1117.685666]
+                    ]
+                }
+            ],
+            "annotation_order": [],
+            "mask_path": ""
+        },
+        "C:\/Users\/Jeffrey.S.Coogan\/Data\/DIVE014\/Images\/ESC_stills_processed_2024-03-15T051626.023600_7219.jpg": {
+            "annotations": [],
+            "annotation_order": [],
+            "mask_path": ""
+        }
+    },
+    "workareas": {}
+}

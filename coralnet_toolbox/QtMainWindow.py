@@ -24,6 +24,10 @@ from coralnet_toolbox.QtImageWindow import ImageWindow
 from coralnet_toolbox.QtLabelWindow import LabelWindow
 
 from coralnet_toolbox.Explorer import ExplorerWindow
+from coralnet_toolbox.SemanticSegmentation import SemanticSegmentationWindow
+from coralnet_toolbox.SemanticSegmentation.QtBuildDatasetDialog import BuildDatasetDialog
+from coralnet_toolbox.SemanticSegmentation.QtTrainModelDialog import TrainModelDialog
+from coralnet_toolbox.SemanticSegmentation.QtDeployModelDialog import DeployModelDialog
 
 from coralnet_toolbox.QtPatchSampling import PatchSamplingDialog
 
@@ -118,6 +122,7 @@ from coralnet_toolbox.Icons import get_icon
 from coralnet_toolbox.utilities import get_available_device
 
 
+
 # ----------------------------------------------------------------------------------------------------------------------
 # Classes
 # ----------------------------------------------------------------------------------------------------------------------
@@ -193,6 +198,13 @@ class MainWindow(QMainWindow):
         self.confidence_window = ConfidenceWindow(self)
         
         self.explorer_window = None  # Initialized in open_explorer_window
+        self.semantic_segmentation_window = None  # Initialized in open_semantic_segmentation_window
+        
+        # Persistent semantic segmentation data (survives window closure)
+        self.semantic_segmentation_data = {
+            'annotation_order': {},
+            'mask_paths': {}
+        }
 
         # TODO update IO classes to have dialogs
         # Create dialogs (I/O)
@@ -218,6 +230,11 @@ class MainWindow(QMainWindow):
 
         # Create dialogs (Sample)
         self.patch_annotation_sampling_dialog = PatchSamplingDialog(self)
+
+        # Create dialogs (Semantic Segmentation)
+        self.build_dataset_dialog = BuildDatasetDialog(self)
+        self.train_model_dialog = TrainModelDialog(self)
+        self.deploy_model_dialog = DeployModelDialog(self)
 
         # Create dialogs (CoralNet)
         self.coralnet_authenticate_dialog = CoralNetAuthenticateDialog(self)
@@ -453,6 +470,31 @@ class MainWindow(QMainWindow):
         self.open_explorer_action.triggered.connect(self.open_explorer_window)
         self.explorer_menu.addAction(self.open_explorer_action)
         
+        # Semantic Segmentation menu
+        self.semantic_segmentation_menu = self.menu_bar.addMenu("Semantic Segmentation")
+        # Open Semantic Segmentation Window
+        self.open_semantic_segmentation_action = QAction("Open Semantic Segmentation", self)
+        self.open_semantic_segmentation_action.triggered.connect(self.open_semantic_segmentation_window)
+        self.semantic_segmentation_menu.addAction(self.open_semantic_segmentation_action)
+        
+        # Add separator
+        self.semantic_segmentation_menu.addSeparator()
+        
+        # Build Dataset
+        self.build_dataset_action = QAction("Build Dataset", self)
+        self.build_dataset_action.triggered.connect(self.open_build_dataset_dialog)
+        self.semantic_segmentation_menu.addAction(self.build_dataset_action)
+        
+        # Train Model
+        self.train_model_action = QAction("Train Model", self)
+        self.train_model_action.triggered.connect(self.open_train_model_dialog)
+        self.semantic_segmentation_menu.addAction(self.train_model_action)
+        
+        # Deploy Model
+        self.deploy_model_action = QAction("Deploy Model", self)
+        self.deploy_model_action.triggered.connect(self.open_deploy_model_dialog)
+        self.semantic_segmentation_menu.addAction(self.deploy_model_action)
+
         # Sampling Annotations menu
         self.annotation_sampling_action = QAction("Sample", self)
         self.annotation_sampling_action.triggered.connect(self.open_patch_annotation_sampling_dialog)
@@ -975,6 +1017,9 @@ class MainWindow(QMainWindow):
             # before it can be properly handled.
             self.explorer_window.setParent(None)
             self.explorer_window.close()
+        if self.semantic_segmentation_window:
+            self.semantic_segmentation_window.setParent(None)
+            self.semantic_segmentation_window.close()
         super().closeEvent(event)
 
     def changeEvent(self, event):
@@ -1405,6 +1450,9 @@ class MainWindow(QMainWindow):
         if self.explorer_window:
             return  # Do not update transparency if explorer window is open
         
+        if self.semantic_segmentation_window:
+            return  # Do not update transparency if semantic segmentation window is open
+        
         if self.all_labels_button.isChecked():
             # Set transparency for all labels in LabelWindow, AnnotationWindow
             self.label_window.set_all_labels_transparency(value)
@@ -1733,6 +1781,121 @@ class MainWindow(QMainWindow):
             
             # Clean up reference
             self.explorer_window = None
+    
+    def open_semantic_segmentation_window(self):
+        """Open the Semantic Segmentation window."""
+        print("Opening Semantic Segmentation window...")
+        
+        # Check if there are any images in the project
+        if not self.image_window.raster_manager.image_paths:
+            QMessageBox.warning(self,
+                                "No Images Loaded",
+                                "Please load images into the project before opening Semantic Segmentation.")
+            return
+
+        # Check if there are any annotations
+        if not self.annotation_window.annotations_dict:
+            QMessageBox.warning(self,
+                                "Semantic Segmentation",
+                                "No annotations are present in the project.")
+            return
+        
+        try:
+            print("Preparing main window...")
+            self.untoggle_all_tools()
+            # Set the transparency value ahead of time
+            self.update_transparency_slider(0)
+            
+            print("Creating semantic segmentation window...")
+            # Recreate the semantic segmentation window, passing the main window instance
+            self.semantic_segmentation_window = SemanticSegmentationWindow(self)
+            
+            # Load persistent semantic segmentation data into the window
+            if hasattr(self, 'semantic_segmentation_data') and self.semantic_segmentation_data:
+                try:
+                    self.semantic_segmentation_window.load_semantic_segmentation_data(self.semantic_segmentation_data)
+                    print(f"Loaded persistent semantic segmentation data into window")
+                except Exception as e:
+                    print(f"Error loading persistent semantic segmentation data: {e}")
+            
+            # Connect the close signal to handle cleanup
+            self.semantic_segmentation_window.windowClosed.connect(self.semantic_segmentation_closed)
+            
+            print("Updating main window state...")
+            # Disable all main window widgets except select few
+            self.set_main_window_enabled_state(
+                enable_list=[self.annotation_window, 
+                             self.label_window],
+                disable_list=[self.toolbar, 
+                              self.menu_bar, 
+                              self.image_window, 
+                              self.confidence_window]
+            )
+            
+            print("Showing semantic segmentation window...")
+            self.semantic_segmentation_window.showMaximized()
+            self.semantic_segmentation_window.activateWindow()
+            self.semantic_segmentation_window.raise_()
+            
+            print("Semantic segmentation window opened successfully")
+            
+        except Exception as e:
+            print(f"Error opening semantic segmentation window: {e}")
+            import traceback
+            traceback.print_exc()
+            QMessageBox.critical(self, "Critical Error", f"Failed to open Semantic Segmentation window:\n{e}")
+            if hasattr(self, 'semantic_segmentation_window') and self.semantic_segmentation_window:
+                self.semantic_segmentation_window.close()
+            self.semantic_segmentation_window = None
+            # Re-enable everything if there was an error
+            self.set_main_window_enabled_state()
+    
+    def semantic_segmentation_closed(self):
+        """Handle the semantic segmentation window being closed."""
+        if self.semantic_segmentation_window:
+            # Save semantic segmentation data before closing
+            try:
+                semantic_data = self.semantic_segmentation_window.get_semantic_segmentation_data()
+                self.semantic_segmentation_data.update(semantic_data)
+                print(f"Saved semantic segmentation data: {len(self.semantic_segmentation_data.get('annotation_order', {}))} annotation orders, {len(self.semantic_segmentation_data.get('mask_paths', {}))} mask paths")
+            except Exception as e:
+                print(f"Error saving semantic segmentation data: {e}")
+            
+            # Move the label_window back to the main window's layout
+            self.label_window.setParent(self.central_widget)
+            self.left_layout.addWidget(self.label_window, 15)  # Add it back to the layout
+            self.label_window.show()
+            self.label_window.resizeEvent(None)
+            self.resizeEvent(None)
+            # Re-enable all main window widgets
+            self.set_main_window_enabled_state()
+            # Clean up reference
+            self.semantic_segmentation_window = None
+
+    def open_build_dataset_dialog(self):
+        """Open the Build Dataset dialog for semantic segmentation"""
+        try:
+            self.untoggle_all_tools()
+            self.build_dataset_dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, "Critical Error", f"Failed to open Build Dataset dialog:\n{e}")
+
+    def open_train_model_dialog(self):
+        """Open the Train Model dialog for semantic segmentation"""
+        try:
+            self.untoggle_all_tools()
+            self.train_model_dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, "Critical Error", f"Failed to open Train Model dialog:\n{e}")
+
+    def open_deploy_model_dialog(self):
+        """Open the Deploy Model dialog for semantic segmentation"""
+        try:
+            self.untoggle_all_tools()
+            self.deploy_model_dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, "Critical Error", f"Failed to open Deploy Model dialog:\n{e}")
+
 
     def open_patch_annotation_sampling_dialog(self):
         """Open the Patch Annotation Sampling dialog to sample annotations from images"""

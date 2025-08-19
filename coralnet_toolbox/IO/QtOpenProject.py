@@ -308,6 +308,35 @@ class OpenProject(QDialog):
         if not annotations:
             return
         
+        # Determine if this is the new format (with semantic segmentation data) or old format
+        is_new_format = False
+        semantic_data = {'annotation_order': {}, 'mask_paths': {}}
+        
+        # Check if any entry has the new structure (annotations, annotation_order, mask_path)
+        for image_path, data in annotations.items():
+            if isinstance(data, dict) and ('annotations' in data or 'annotation_order' in data or 'mask_path' in data):
+                is_new_format = True
+                break
+        
+        if is_new_format:
+            print("Loading project with semantic segmentation data...")
+            # Extract semantic data and convert to old format for processing
+            old_format_annotations = {}
+            for image_path, data in annotations.items():
+                if isinstance(data, dict):
+                    # New format
+                    old_format_annotations[image_path] = data.get('annotations', [])
+                    if 'annotation_order' in data:
+                        semantic_data['annotation_order'][image_path] = data['annotation_order']
+                    if 'mask_path' in data:
+                        semantic_data['mask_paths'][image_path] = data['mask_path']
+                else:
+                    # Fallback: treat as old format
+                    old_format_annotations[image_path] = data
+            annotations = old_format_annotations
+        else:
+            print("Loading project with legacy annotation format...")
+        
         # Start the progress bar
         total_annotations = sum(len(image_annotations) for image_annotations in annotations.values())
         progress_bar = ProgressBar(self.annotation_window, title="Importing Annotations")
@@ -368,6 +397,21 @@ class OpenProject(QDialog):
             # Load the annotations for current image and update counts
             self.annotation_window.load_annotations()
             self.label_window.update_annotation_count()
+            
+            # Load semantic segmentation data if available
+            if is_new_format and (semantic_data['annotation_order'] or semantic_data['mask_paths']):
+                # Store in main window's persistent data
+                if hasattr(self.main_window, 'semantic_segmentation_data'):
+                    self.main_window.semantic_segmentation_data.update(semantic_data)
+                    print(f"Stored semantic segmentation data in main window: {len(semantic_data.get('annotation_order', {}))} annotation orders, {len(semantic_data.get('mask_paths', {}))} mask paths")
+                
+                # Also load into window if it exists
+                if (hasattr(self.main_window, 'semantic_segmentation_window') and 
+                    self.main_window.semantic_segmentation_window is not None):
+                    print(f"Loading semantic segmentation data into window...")
+                    self.main_window.semantic_segmentation_window.load_semantic_segmentation_data(semantic_data)
+                else:
+                    print("Semantic segmentation data stored in main window (window not open yet)")
 
         except Exception as e:
             QMessageBox.warning(self.annotation_window,
